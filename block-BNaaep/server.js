@@ -95,6 +95,7 @@
 let http = require('http');
 let file = require('fs');
 let qs = require('querystring');
+let userpath = __dirname + '/contacts/';
 let server = http.createServer((req, res) => {
   console.log(req.method, req.url);
   let store = '';
@@ -142,12 +143,18 @@ let server = http.createServer((req, res) => {
                   <h2>${parsedData.age}</h2>
                   <h2>${parsedData.bio}</h2>`);
     });
-  } else if (req.method === 'GET' && req.url === '/users') {
-    res.setHeader('Content-Type', 'text/html');
-    file.createReadStream('./contacts/chinna.json').pipe(res);
+  } else if (req.method === 'POST' && req.url === '/users') {
     req.on('end', () => {
-      let parsedData = qs.parse(store);
-      res.end(`<h2>${parsedData.name}</h2>`);
+      let userName = JSON.parse(store).name;
+      file.open(userpath + userName + '.json', 'wx', (err, content) => {
+        if (err) console.log(err);
+        file.writeFile(content, store, (err) => {
+          if (err) console.log(err);
+          file.close(content, () => {
+            res.end(`${userName} is created sucessfully`);
+          });
+        });
+      });
     });
   }
 });
